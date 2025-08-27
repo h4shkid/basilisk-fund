@@ -18,7 +18,7 @@ export function Leaderboard() {
   const [members, setMembers] = useState<Member[]>([])
   const [activeTab, setActiveTab] = useState<'investors' | 'earners'>('investors')
 
-  useEffect(() {
+  useEffect(function() {
     fetchMembers()
   }, [])
 

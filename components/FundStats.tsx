@@ -19,7 +19,7 @@ export function FundStats() {
     winRate: 0
   })
 
-  useEffect(() {
+  useEffect(function() {
     fetchStats()
   }, [])
 

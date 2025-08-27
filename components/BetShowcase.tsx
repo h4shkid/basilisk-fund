@@ -19,7 +19,7 @@ export function BetShowcase() {
   const [bets, setBets] = useState<Bet[]>([])
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null)
 
-  useEffect(() => {
+  useEffect(function() {
     fetchBets()
   }, [])
 
