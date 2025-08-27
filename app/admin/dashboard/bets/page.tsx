@@ -78,11 +78,18 @@ export default function BetsPage() {
     try {
       const imageUrl = await uploadImage()
       
+      // Ensure losses are negative
+      let profitLoss = formData.profitLoss
+      if (formData.outcome === 'lost' && profitLoss > 0) {
+        profitLoss = -profitLoss
+      }
+      
       const res = await fetch('/api/bets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          profitLoss,
           imageUrl: imageUrl || undefined
         })
       })
@@ -110,11 +117,18 @@ export default function BetsPage() {
         if (newImageUrl) imageUrl = newImageUrl
       }
       
+      // Ensure losses are negative
+      let profitLoss = formData.profitLoss
+      if (formData.outcome === 'lost' && profitLoss > 0) {
+        profitLoss = -profitLoss
+      }
+      
       const res = await fetch(`/api/bets/${editingBet.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          profitLoss,
           imageUrl
         })
       })
@@ -360,16 +374,22 @@ export default function BetsPage() {
               {(formData.outcome === 'won' || formData.outcome === 'lost') && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Profit/Loss Amount
+                    {formData.outcome === 'won' ? 'Profit Amount' : 'Loss Amount'} (enter positive value)
                   </label>
                   <input
                     type="number"
-                    value={formData.profitLoss}
-                    onChange={(e) => setFormData({ ...formData, profitLoss: parseFloat(e.target.value) })}
+                    value={Math.abs(formData.profitLoss)}
+                    onChange={(e) => setFormData({ ...formData, profitLoss: Math.abs(parseFloat(e.target.value)) })}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
                     placeholder="0.00"
                     step="0.01"
+                    min="0"
                   />
+                  <p className="text-xs text-gray-400 mt-1">
+                    {formData.outcome === 'won' 
+                      ? 'Amount won (will be distributed to members)' 
+                      : 'Amount lost (will be deducted from members)'}
+                  </p>
                 </div>
               )}
               
@@ -513,16 +533,22 @@ export default function BetsPage() {
               {(formData.outcome === 'won' || formData.outcome === 'lost') && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Profit/Loss Amount
+                    {formData.outcome === 'won' ? 'Profit Amount' : 'Loss Amount'} (enter positive value)
                   </label>
                   <input
                     type="number"
-                    value={formData.profitLoss}
-                    onChange={(e) => setFormData({ ...formData, profitLoss: parseFloat(e.target.value) })}
+                    value={Math.abs(formData.profitLoss)}
+                    onChange={(e) => setFormData({ ...formData, profitLoss: Math.abs(parseFloat(e.target.value)) })}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
                     placeholder="0.00"
                     step="0.01"
+                    min="0"
                   />
+                  <p className="text-xs text-gray-400 mt-1">
+                    {formData.outcome === 'won' 
+                      ? 'Amount won (will be distributed to members)' 
+                      : 'Amount lost (will be deducted from members)'}
+                  </p>
                 </div>
               )}
               
