@@ -20,7 +20,7 @@ interface DashboardStats {
   totalBets: number
   winRate: number
   pendingBets: number
-  recentActivity: any[]
+  recentActivity: Array<{ description: string; time: string }>
 }
 
 export default function DashboardPage() {
@@ -52,7 +52,7 @@ export default function DashboardPage() {
       setStats({
         totalFundSize: membersData.stats.totalFundSize,
         totalEarnings: membersData.stats.totalEarnings,
-        totalPayouts: membersData.members.reduce((acc: number, m: any) => acc + m.totalPayouts, 0),
+        totalPayouts: membersData.members.reduce((acc: number, m: { totalPayouts: number }) => acc + m.totalPayouts, 0),
         activeMembersCount: membersData.stats.activeMembersCount,
         totalBets: betsData.stats.totalBets,
         winRate: betsData.stats.winRate,
