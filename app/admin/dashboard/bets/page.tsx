@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, TrendingUp, TrendingDown, Clock, Upload } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Clock, Upload, Trash2, Edit2 } from 'lucide-react'
 
 interface Bet {
   id: string
@@ -65,6 +65,27 @@ export default function BetsPage() {
     }
   }
 
+  const handleDeleteBet = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this bet?')) {
+      return
+    }
+    
+    try {
+      const res = await fetch(`/api/bets/${id}`, {
+        method: 'DELETE'
+      })
+      
+      if (res.ok) {
+        fetchBets()
+      } else {
+        alert('Failed to delete bet')
+      }
+    } catch (error) {
+      console.error('Failed to delete bet:', error)
+      alert('Failed to delete bet')
+    }
+  }
+
   const getOutcomeColor = (outcome: string) => {
     switch (outcome) {
       case 'won': return 'text-green-500'
@@ -118,6 +139,7 @@ export default function BetsPage() {
               <th className="text-left p-4 text-gray-400 font-medium">Outcome</th>
               <th className="text-left p-4 text-gray-400 font-medium">Profit/Loss</th>
               <th className="text-left p-4 text-gray-400 font-medium">Notes</th>
+              <th className="text-left p-4 text-gray-400 font-medium">Image</th>
               <th className="text-left p-4 text-gray-400 font-medium">Actions</th>
             </tr>
           </thead>
@@ -150,6 +172,22 @@ export default function BetsPage() {
                       <Upload className="w-4 h-4 text-gray-400" />
                     </button>
                   )}
+                </td>
+                <td className="p-4">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => alert('Edit functionality coming soon!')}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-gray-400" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteBet(bet.id)}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

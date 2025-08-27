@@ -64,6 +64,11 @@ body {
   background: linear-gradient(to bottom right, rgb(15 23 42), rgba(147 51 234 / 0.2), rgb(15 23 42));
 }
 
+select option {
+  background-color: rgb(15 23 42);
+  color: white;
+}
+
 @layer utilities {
   .glassmorphism {
     background: rgba(255, 255, 255, 0.05);

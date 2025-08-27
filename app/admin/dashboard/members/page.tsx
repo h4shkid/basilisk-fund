@@ -58,6 +58,27 @@ export default function MembersPage() {
     }
   }
 
+  const handleDeleteMember = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this member? This will also delete all their investments and payouts.')) {
+      return
+    }
+    
+    try {
+      const res = await fetch(`/api/members/${id}`, {
+        method: 'DELETE'
+      })
+      
+      if (res.ok) {
+        fetchMembers()
+      } else {
+        alert('Failed to delete member')
+      }
+    } catch (error) {
+      console.error('Failed to delete member:', error)
+      alert('Failed to delete member')
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
@@ -121,10 +142,16 @@ export default function MembersPage() {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => alert('Edit functionality coming soon!')}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
                       <Edit2 className="w-4 h-4 text-gray-400" />
                     </button>
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => handleDeleteMember(member.id)}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
                       <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
                   </div>
