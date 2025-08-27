@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/utils'
-import { Calendar, TrendingUp, TrendingDown } from 'lucide-react'
-import Image from 'next/image'
+import { Calendar, TrendingUp, TrendingDown, X } from 'lucide-react'
 
 interface Bet {
   id: string
@@ -57,42 +56,41 @@ export function BetShowcase() {
         {bets.slice(0, 6).map((bet) => (
           <div
             key={bet.id}
-            className="relative aspect-[9/16] rounded-xl overflow-hidden cursor-pointer group"
+            className="relative rounded-xl overflow-hidden cursor-pointer group bg-white/5 hover:bg-white/10 transition-all"
             onClick={() => setSelectedBet(bet)}
           >
             {bet.imageUrl && (
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/80">
-                <Image
+              <div className="relative">
+                <img
                   src={bet.imageUrl}
                   alt={bet.description}
-                  fill
-                  className="object-cover"
+                  className="w-full h-auto object-contain bg-black/20"
+                  style={{ maxHeight: '500px' }}
                 />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4">
+                  <p className="font-semibold text-white mb-2 line-clamp-2">{bet.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-300" />
+                      <span className="text-sm text-gray-300">
+                        {new Date(bet.datePlaced).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    <div className={`flex items-center gap-1 ${getOutcomeColor(bet.outcome)}`}>
+                      {getOutcomeIcon(bet.outcome)}
+                      <span className="text-sm font-bold">
+                        {bet.outcome === 'won' ? '+' : bet.outcome === 'lost' ? '-' : ''}
+                        {formatCurrency(Math.abs(bet.profitLoss))}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-              <p className="font-semibold mb-2 line-clamp-2">{bet.description}</p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-300" />
-                  <span className="text-sm text-gray-300">
-                    {new Date(bet.datePlaced).toLocaleDateString()}
-                  </span>
-                </div>
-                
-                <div className={`flex items-center gap-1 ${getOutcomeColor(bet.outcome)}`}>
-                  {getOutcomeIcon(bet.outcome)}
-                  <span className="text-sm font-bold">
-                    {bet.outcome === 'won' ? '+' : bet.outcome === 'lost' ? '-' : ''}
-                    {formatCurrency(Math.abs(bet.profitLoss))}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
           </div>
         ))}
       </div>
@@ -100,6 +98,55 @@ export function BetShowcase() {
       {bets.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-400">No bets with images yet</p>
+        </div>
+      )}
+
+      {/* Modal for viewing full image */}
+      {selectedBet && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedBet(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] overflow-auto">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedBet(null)
+              }}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            
+            <img
+              src={selectedBet.imageUrl}
+              alt={selectedBet.description}
+              className="w-full h-auto"
+            />
+            
+            <div className="bg-black/80 p-6 text-white">
+              <h3 className="text-xl font-bold mb-2">{selectedBet.description}</h3>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-300">
+                    Amount: {formatCurrency(selectedBet.amount)}
+                  </span>
+                  <span className="text-gray-300">
+                    Date: {new Date(selectedBet.datePlaced).toLocaleDateString()}
+                  </span>
+                </div>
+                
+                <div className={`flex items-center gap-2 text-lg font-bold ${getOutcomeColor(selectedBet.outcome)}`}>
+                  {getOutcomeIcon(selectedBet.outcome)}
+                  <span>
+                    {selectedBet.outcome === 'won' ? '+' : selectedBet.outcome === 'lost' ? '-' : ''}
+                    {formatCurrency(Math.abs(selectedBet.profitLoss))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
