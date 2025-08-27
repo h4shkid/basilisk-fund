@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
-    const member = await prisma.member.findUnique({
-      where: { id: params.id },
+    const member = await prisma.member.findUnique(
+      where: { id },
       include: {
         investments: true,
         payouts: true
@@ -26,14 +27,15 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const body = await request.json()
     const { name, email, isActive } = body
 
     const member = await prisma.member.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         email,
@@ -49,21 +51,22 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     // Delete all related records first
     await prisma.investment.deleteMany({
-      where: { memberId: params.id }
+      where: { memberId: id }
     })
     
     await prisma.payout.deleteMany({
-      where: { memberId: params.id }
+      where: { memberId: id }
     })
 
     // Then delete the member
     await prisma.member.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ success: true })
