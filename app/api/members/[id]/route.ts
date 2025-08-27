@@ -7,7 +7,7 @@ export async function GET(
 ) {
   const { id } = await params
   try {
-    const member = await prisma.member.findUnique(
+    const member = await prisma.member.findUnique({
       where: { id },
       include: {
         investments: true,
