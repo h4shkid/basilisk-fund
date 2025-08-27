@@ -36,7 +36,11 @@ export async function POST(request: Request) {
       data: body
     })
 
+    // Distribute profits for wins or losses for lost bets
     if (bet.outcome === 'won' && bet.profitLoss > 0) {
+      await distributeProfit(bet.profitLoss)
+    } else if (bet.outcome === 'lost' && bet.profitLoss < 0) {
+      // For losses, profitLoss is negative, so we pass the negative value to distribute as a loss
       await distributeProfit(bet.profitLoss)
     }
 

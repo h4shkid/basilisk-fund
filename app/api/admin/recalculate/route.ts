@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST() {
   try {
-    // Get all bets that resulted in wins
+    // Get all bets that resulted in wins or losses
     const winningBets = await prisma.bet.findMany({
       where: {
         outcome: 'won',
@@ -12,9 +12,20 @@ export async function POST() {
         }
       }
     })
+    
+    const losingBets = await prisma.bet.findMany({
+      where: {
+        outcome: 'lost',
+        profitLoss: {
+          lt: 0
+        }
+      }
+    })
 
-    // Calculate total profits from all winning bets
-    const totalProfits = winningBets.reduce((sum, bet) => sum + bet.profitLoss, 0)
+    // Calculate total profits from wins and losses
+    const totalWins = winningBets.reduce((sum, bet) => sum + bet.profitLoss, 0)
+    const totalLosses = losingBets.reduce((sum, bet) => sum + bet.profitLoss, 0)
+    const totalProfits = totalWins + totalLosses // totalLosses is negative, so this gives net profit
 
     // Get all members
     const members = await prisma.member.findMany()
@@ -57,7 +68,9 @@ export async function POST() {
     return NextResponse.json({ 
       success: true,
       message: 'Earnings recalculated successfully',
-      totalProfits,
+      totalWins,
+      totalLosses,
+      netProfits: totalProfits,
       totalFundSize,
       updates
     })

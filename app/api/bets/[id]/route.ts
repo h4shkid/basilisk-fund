@@ -19,8 +19,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Bet not found' }, { status: 404 })
     }
 
-    // If the bet was previously won and is changing, reverse the old profit
-    if (currentBet.outcome === 'won' && currentBet.profitLoss > 0 && outcome !== 'won') {
+    // Reverse the old profit/loss distribution if outcome or amount changed
+    if (currentBet.outcome === 'won' && currentBet.profitLoss > 0) {
+      await reverseProfit(currentBet.profitLoss)
+    } else if (currentBet.outcome === 'lost' && currentBet.profitLoss < 0) {
       await reverseProfit(currentBet.profitLoss)
     }
 
@@ -36,8 +38,10 @@ export async function PUT(
       }
     })
 
-    // If outcome changed to won and there's profit, distribute it
-    if (outcome === 'won' && profitLoss > 0 && currentBet.outcome !== 'won') {
+    // Distribute the new profit/loss
+    if (outcome === 'won' && profitLoss > 0) {
+      await distributeProfit(profitLoss)
+    } else if (outcome === 'lost' && profitLoss < 0) {
       await distributeProfit(profitLoss)
     }
 
@@ -62,8 +66,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Bet not found' }, { status: 404 })
     }
 
-    // If this was a winning bet with profit, reverse the distribution
+    // Reverse the profit/loss distribution
     if (bet.outcome === 'won' && bet.profitLoss > 0) {
+      await reverseProfit(bet.profitLoss)
+    } else if (bet.outcome === 'lost' && bet.profitLoss < 0) {
       await reverseProfit(bet.profitLoss)
     }
 
