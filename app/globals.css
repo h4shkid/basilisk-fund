@@ -49,11 +49,10 @@
   }
 }
 
-@layer base {
-  body {
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
@@ -61,23 +60,29 @@ html {
 }
 
 body {
-  @apply bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900;
   min-height: 100vh;
+  background: linear-gradient(to bottom right, rgb(15 23 42), rgba(147 51 234 / 0.2), rgb(15 23 42));
 }
 
-.glassmorphism {
-  @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl;
-}
-
-.gradient-border {
-  @apply relative;
-  background: linear-gradient(45deg, #8b5cf6, #3b82f6, #8b5cf6);
-  padding: 1px;
-  border-radius: 0.75rem;
-}
-
-.gradient-border > * {
-  @apply bg-slate-900 rounded-xl;
+@layer utilities {
+  .glassmorphism {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+  }
+  
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(45deg, rgb(139 92 246), rgb(59 130 246), rgb(139 92 246));
+    padding: 1px;
+    border-radius: 0.75rem;
+  }
+  
+  .gradient-border > * {
+    background: rgb(15 23 42);
+    border-radius: 0.75rem;
+  }
 }
 
 @keyframes shimmer {
