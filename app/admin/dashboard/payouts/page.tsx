@@ -50,7 +50,7 @@ export default function PayoutsPage() {
     try {
       const res = await fetch('/api/members')
       const data = await res.json()
-      const membersWithBalance = data.members.map((m: any) => ({
+      const membersWithBalance = data.members.map((m: Member & { totalInvested: number; totalEarnings: number; totalPayouts: number }) => ({
         ...m,
         currentBalance: m.totalInvested + m.totalEarnings - m.totalPayouts
       }))
