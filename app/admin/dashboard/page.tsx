@@ -121,7 +121,9 @@ export default function DashboardPage() {
     },
     {
       title: 'Win Rate',
-      value: `${stats.winRate.toFixed(1)}%`,
+      value: stats.winRate !== null && stats.winRate !== undefined && !isNaN(stats.winRate) 
+        ? `${stats.winRate.toFixed(1)}%` 
+        : '0.0%',
       change: '+2.1%',
       icon: Trophy,
       color: 'from-yellow-500 to-orange-500',

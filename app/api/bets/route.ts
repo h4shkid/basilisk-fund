@@ -9,13 +9,17 @@ export async function GET() {
       }
     })
 
+    const wonBets = bets.filter(b => b.outcome === 'won')
+    const lostBets = bets.filter(b => b.outcome === 'lost')
+    const decidedBets = bets.filter(b => b.outcome !== 'pending')
+    
     const stats = {
       totalBets: bets.length,
-      totalWinnings: bets.filter(b => b.outcome === 'won').reduce((acc, bet) => acc + bet.profitLoss, 0),
-      totalLosses: Math.abs(bets.filter(b => b.outcome === 'lost').reduce((acc, bet) => acc + bet.profitLoss, 0)),
+      totalWinnings: wonBets.reduce((acc, bet) => acc + bet.profitLoss, 0),
+      totalLosses: Math.abs(lostBets.reduce((acc, bet) => acc + bet.profitLoss, 0)),
       pendingBets: bets.filter(b => b.outcome === 'pending').length,
-      winRate: bets.length > 0 
-        ? (bets.filter(b => b.outcome === 'won').length / bets.filter(b => b.outcome !== 'pending').length) * 100
+      winRate: decidedBets.length > 0 
+        ? (wonBets.length / decidedBets.length) * 100
         : 0
     }
 
