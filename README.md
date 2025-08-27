@@ -1,36 +1,126 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Basilisk Fund
+
+A collaborative betting platform where friends pool USDC investments and share profits automatically based on investment percentages.
+
+## Features
+
+### Public Homepage
+- **Visual Bet Showcase**: 9:16 aspect ratio image gallery of placed bets
+- **Investment Leaderboard**: Rankings by total investment and earnings
+- **Fund Overview Dashboard**: Real-time fund statistics
+- **Individual Member Stats**: Investment tracking and profit distribution
+
+### Admin Panel
+- **Member Management**: Add/edit members and track investments
+- **Bet Management**: Record bets with outcomes and profit/loss
+- **Financial Calculations**: Automatic profit distribution based on investment percentage
+- **Payout Processing**: Track member withdrawals
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS with dark theme
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Deployment**: Optimized for Vercel
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- PostgreSQL database (local or cloud)
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd basilisk-fund
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Edit `.env.local` with your configuration:
+- `DATABASE_URL`: PostgreSQL connection string
+- `NEXTAUTH_SECRET`: Generate with `openssl rand -base64 32`
+- `NEXTAUTH_URL`: Your deployment URL
 
-## Learn More
+4. Set up the database:
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+This creates the database tables and seeds initial data including:
+- Admin account: `admin@basiliskfund.com` / `admin123`
+- Sample members and bets
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Run the development server:
+```bash
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Deploy on Vercel
+## Deployment on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push your code to GitHub
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. Import the project in Vercel
+
+3. Configure environment variables in Vercel:
+   - `DATABASE_URL`: Use Vercel Postgres or external database
+   - `NEXTAUTH_URL`: Your production URL
+   - `NEXTAUTH_SECRET`: Secure random string
+
+4. Deploy!
+
+## Database Schema
+
+### Core Models
+
+- **Member**: Fund members with investment tracking
+- **Investment**: Individual investment records
+- **Bet**: Betting activities with outcomes
+- **Payout**: Member withdrawal records
+- **Admin**: Administrator accounts
+
+### Key Calculations
+
+```
+Investment % = (Member Investment / Total Fund) × 100
+Profit Share = Total Profit × Investment %
+Balance = Investment + Earnings - Payouts
+```
+
+## Security
+
+- Admin-only authentication for dashboard access
+- Password hashing with bcrypt
+- Session management with NextAuth
+- Input validation and sanitization
+- Protected API routes
+
+## Future Enhancements
+
+- Email notifications for members
+- Advanced analytics and reporting
+- Multi-currency support beyond USDC
+- Mobile app companion
+- API integration with betting platforms
+
+## License
+
+Private project - All rights reserved
+
+## Support
+
+For issues or questions, contact the development team.
