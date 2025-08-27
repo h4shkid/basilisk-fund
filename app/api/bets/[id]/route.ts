@@ -38,11 +38,26 @@ export async function DELETE(
 ) {
   const { id } = await params
   try {
+    // Get the bet first to check if we need to reverse profit distribution
+    const bet = await prisma.bet.findUnique({
+      where: { id }
+    })
+
+    if (!bet) {
+      return NextResponse.json({ error: 'Bet not found' }, { status: 404 })
+    }
+
+    // If this was a winning bet with profit, reverse the distribution
+    if (bet.outcome === 'won' && bet.profitLoss > 0) {
+      await reverseProfit(bet.profitLoss)
+    }
+
+    // Now delete the bet
     await prisma.bet.delete({
       where: { id }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, message: 'Bet deleted and earnings adjusted' })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete bet' }, { status: 500 })
   }
@@ -66,6 +81,30 @@ async function distributeProfit(profit: number) {
       data: {
         totalEarnings: {
           increment: memberProfit
+        }
+      }
+    })
+  }
+}
+
+async function reverseProfit(profit: number) {
+  const members = await prisma.member.findMany({
+    where: { isActive: true }
+  })
+
+  const totalFundSize = members.reduce((acc, member) => acc + member.totalInvested, 0)
+
+  if (totalFundSize === 0) return
+
+  for (const member of members) {
+    const percentage = member.totalInvested / totalFundSize
+    const memberProfit = profit * percentage
+
+    await prisma.member.update({
+      where: { id: member.id },
+      data: {
+        totalEarnings: {
+          decrement: memberProfit
         }
       }
     })

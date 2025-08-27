@@ -9,7 +9,9 @@ import {
   Trophy,
   Activity,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -34,6 +36,8 @@ export default function DashboardPage() {
     pendingBets: 0,
     recentActivity: []
   })
+  const [isRecalculating, setIsRecalculating] = useState(false)
+  const [recalculateMessage, setRecalculateMessage] = useState('')
 
   useEffect(() => {
     fetchDashboardData()
@@ -61,6 +65,32 @@ export default function DashboardPage() {
       })
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error)
+    }
+  }
+
+  const handleRecalculateEarnings = async () => {
+    setIsRecalculating(true)
+    setRecalculateMessage('')
+    
+    try {
+      const response = await fetch('/api/admin/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        setRecalculateMessage(`Successfully recalculated earnings. Total profits: ${formatCurrency(data.totalProfits)}`)
+        await fetchDashboardData()
+      } else {
+        setRecalculateMessage('Failed to recalculate earnings')
+      }
+    } catch (error) {
+      setRecalculateMessage('Error recalculating earnings')
+    } finally {
+      setIsRecalculating(false)
+      setTimeout(() => setRecalculateMessage(''), 5000)
     }
   }
 
@@ -102,8 +132,34 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-gray-400">Welcome back, Admin</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
+            <p className="text-gray-400">Welcome back, Admin</p>
+          </div>
+          
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={handleRecalculateEarnings}
+              disabled={isRecalculating}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRecalculating ? 'animate-spin' : ''}`} />
+              {isRecalculating ? 'Recalculating...' : 'Recalculate Earnings'}
+            </button>
+            
+            {recalculateMessage && (
+              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                recalculateMessage.includes('Successfully') 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : 'bg-red-500/20 text-red-400'
+              }`}>
+                <AlertCircle className="w-4 h-4" />
+                {recalculateMessage}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
