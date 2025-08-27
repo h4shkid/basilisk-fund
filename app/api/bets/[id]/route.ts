@@ -8,7 +8,21 @@ export async function PUT(
   const { id } = await params
   try {
     const body = await request.json()
-    const { description, amount, outcome, profitLoss, notes } = body
+    const { description, amount, outcome, profitLoss, notes, imageUrl } = body
+
+    // Get the current bet to check if outcome changed
+    const currentBet = await prisma.bet.findUnique({
+      where: { id }
+    })
+
+    if (!currentBet) {
+      return NextResponse.json({ error: 'Bet not found' }, { status: 404 })
+    }
+
+    // If the bet was previously won and is changing, reverse the old profit
+    if (currentBet.outcome === 'won' && currentBet.profitLoss > 0 && outcome !== 'won') {
+      await reverseProfit(currentBet.profitLoss)
+    }
 
     const bet = await prisma.bet.update({
       where: { id },
@@ -17,12 +31,13 @@ export async function PUT(
         amount,
         outcome,
         profitLoss,
-        notes
+        notes,
+        imageUrl
       }
     })
 
     // If outcome changed to won and there's profit, distribute it
-    if (outcome === 'won' && profitLoss > 0) {
+    if (outcome === 'won' && profitLoss > 0 && currentBet.outcome !== 'won') {
       await distributeProfit(profitLoss)
     }
 

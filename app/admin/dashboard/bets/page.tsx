@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { formatCurrency } from '@/lib/utils'
-import { Plus, TrendingUp, TrendingDown, Clock, Upload, Trash2, Edit2 } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Clock, Upload, Trash2, Edit2, X, Image as ImageIcon } from 'lucide-react'
 
 interface Bet {
   id: string
@@ -18,12 +18,17 @@ interface Bet {
 export default function BetsPage() {
   const [bets, setBets] = useState<Bet[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingBet, setEditingBet] = useState<Bet | null>(null)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
   const [formData, setFormData] = useState({
     description: '',
     amount: 0,
     outcome: 'pending',
     profitLoss: 0,
-    notes: ''
+    notes: '',
+    imageUrl: ''
   })
 
   useEffect(() => {
@@ -40,24 +45,51 @@ export default function BetsPage() {
     }
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const uploadImage = async () => {
+    if (!imageFile) return null
+
+    const formData = new FormData()
+    formData.append('file', imageFile)
+
+    try {
+      // For now, we'll convert to base64 and store as data URL
+      // In production, you'd upload to a proper storage service
+      return imagePreview
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      return null
+    }
+  }
+
   const handleAddBet = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const imageUrl = await uploadImage()
+      
       const res = await fetch('/api/bets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          imageUrl: imageUrl || undefined
+        })
       })
       
       if (res.ok) {
         setShowAddModal(false)
-        setFormData({
-          description: '',
-          amount: 0,
-          outcome: 'pending',
-          profitLoss: 0,
-          notes: ''
-        })
+        resetForm()
         fetchBets()
       }
     } catch (error) {
@@ -65,8 +97,41 @@ export default function BetsPage() {
     }
   }
 
+  const handleEditBet = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingBet) return
+
+    try {
+      let imageUrl = formData.imageUrl
+      
+      // Upload new image if one was selected
+      if (imageFile) {
+        const newImageUrl = await uploadImage()
+        if (newImageUrl) imageUrl = newImageUrl
+      }
+      
+      const res = await fetch(`/api/bets/${editingBet.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          imageUrl
+        })
+      })
+      
+      if (res.ok) {
+        setShowEditModal(false)
+        setEditingBet(null)
+        resetForm()
+        fetchBets()
+      }
+    } catch (error) {
+      console.error('Failed to update bet:', error)
+    }
+  }
+
   const handleDeleteBet = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this bet?')) {
+    if (!confirm('Are you sure you want to delete this bet? This will also adjust member earnings if applicable.')) {
       return
     }
     
@@ -84,6 +149,33 @@ export default function BetsPage() {
       console.error('Failed to delete bet:', error)
       alert('Failed to delete bet')
     }
+  }
+
+  const openEditModal = (bet: Bet) => {
+    setEditingBet(bet)
+    setFormData({
+      description: bet.description,
+      amount: bet.amount,
+      outcome: bet.outcome,
+      profitLoss: bet.profitLoss,
+      notes: bet.notes || '',
+      imageUrl: bet.imageUrl || ''
+    })
+    setImagePreview(bet.imageUrl || '')
+    setShowEditModal(true)
+  }
+
+  const resetForm = () => {
+    setFormData({
+      description: '',
+      amount: 0,
+      outcome: 'pending',
+      profitLoss: 0,
+      notes: '',
+      imageUrl: ''
+    })
+    setImageFile(null)
+    setImagePreview('')
   }
 
   const getOutcomeColor = (outcome: string) => {
@@ -121,7 +213,10 @@ export default function BetsPage() {
         </div>
         
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            resetForm()
+            setShowAddModal(true)
+          }}
           className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
           <Plus className="w-5 h-5" />
@@ -166,17 +261,21 @@ export default function BetsPage() {
                 </td>
                 <td className="p-4">
                   {bet.imageUrl ? (
-                    <span className="text-green-500 text-sm">Has image</span>
-                  ) : (
-                    <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                      <Upload className="w-4 h-4 text-gray-400" />
+                    <button 
+                      onClick={() => window.open(bet.imageUrl, '_blank')}
+                      className="text-green-500 text-sm hover:text-green-400 flex items-center gap-1"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      View
                     </button>
+                  ) : (
+                    <span className="text-gray-500 text-sm">-</span>
                   )}
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
                     <button 
-                      onClick={() => alert('Edit functionality coming soon!')}
+                      onClick={() => openEditModal(bet)}
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                     >
                       <Edit2 className="w-4 h-4 text-gray-400" />
@@ -195,10 +294,22 @@ export default function BetsPage() {
         </table>
       </div>
 
+      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="glassmorphism p-8 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-white mb-6">Add New Bet</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Add New Bet</h2>
+              <button
+                onClick={() => {
+                  setShowAddModal(false)
+                  resetForm()
+                }}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
             
             <form onSubmit={handleAddBet} className="space-y-4">
               <div>
@@ -264,6 +375,43 @@ export default function BetsPage() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Upload Image (Optional)
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Choose Image
+                  </label>
+                  {imagePreview && (
+                    <div className="relative">
+                      <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageFile(null)
+                          setImagePreview('')
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   Notes (Optional)
                 </label>
                 <textarea
@@ -278,7 +426,10 @@ export default function BetsPage() {
               <div className="flex gap-4 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false)
+                    resetForm()
+                  }}
                   className="flex-1 bg-white/10 text-white py-2 rounded-lg hover:bg-white/20 transition-colors"
                 >
                   Cancel
@@ -288,6 +439,161 @@ export default function BetsPage() {
                   className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg hover:opacity-90 transition-opacity"
                 >
                   Add Bet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingBet && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glassmorphism p-8 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Edit Bet</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditingBet(null)
+                  resetForm()
+                }}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditBet} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                  placeholder="Enter bet description"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) })}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Outcome
+                </label>
+                <select
+                  value={formData.outcome}
+                  onChange={(e) => setFormData({ ...formData, outcome: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="won">Won</option>
+                  <option value="lost">Lost</option>
+                </select>
+              </div>
+              
+              {(formData.outcome === 'won' || formData.outcome === 'lost') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Profit/Loss Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.profitLoss}
+                    onChange={(e) => setFormData({ ...formData, profitLoss: parseFloat(e.target.value) })}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                    placeholder="0.00"
+                    step="0.01"
+                  />
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Update Image (Optional)
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload-edit"
+                  />
+                  <label
+                    htmlFor="image-upload-edit"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white hover:bg-white/10 transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {imagePreview ? 'Change Image' : 'Upload Image'}
+                  </label>
+                  {imagePreview && (
+                    <div className="relative">
+                      <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-lg" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImageFile(null)
+                          setImagePreview('')
+                          setFormData({ ...formData, imageUrl: '' })
+                        }}
+                        className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500"
+                  placeholder="Add any additional notes"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingBet(null)
+                    resetForm()
+                  }}
+                  className="flex-1 bg-white/10 text-white py-2 rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Update Bet
                 </button>
               </div>
             </form>
