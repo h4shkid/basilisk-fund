@@ -39,9 +39,13 @@ export async function PUT(
     })
 
     // Distribute the new profit/loss
+    console.log('Updated bet:', { outcome, profitLoss, willDistribute: (outcome === 'won' && profitLoss > 0) || (outcome === 'lost' && profitLoss < 0) })
+    
     if (outcome === 'won' && profitLoss > 0) {
+      console.log('Distributing profit for won bet:', profitLoss)
       await distributeProfit(profitLoss)
     } else if (outcome === 'lost' && profitLoss < 0) {
+      console.log('Distributing loss for lost bet:', profitLoss)
       await distributeProfit(profitLoss)
     }
 
@@ -93,9 +97,18 @@ async function distributeProfit(profit: number) {
 
   if (totalFundSize === 0) return
 
+  console.log('Distributing profit/loss:', {
+    profitAmount: profit,
+    isLoss: profit < 0,
+    totalFundSize,
+    activeMembers: members.length
+  })
+
   for (const member of members) {
     const percentage = member.totalInvested / totalFundSize
     const memberProfit = profit * percentage
+
+    console.log(`Member ${member.name}: ${member.totalInvested}/${totalFundSize} = ${percentage * 100}% = ${memberProfit}`)
 
     await prisma.member.update({
       where: { id: member.id },

@@ -79,10 +79,11 @@ export default function BetsPage() {
       const imageUrl = await uploadImage()
       
       // Ensure losses are negative
-      let profitLoss = formData.profitLoss
+      let profitLoss = parseFloat(formData.profitLoss.toString()) || 0
       if (formData.outcome === 'lost' && profitLoss > 0) {
         profitLoss = -profitLoss
       }
+      console.log('Submitting bet:', { outcome: formData.outcome, originalValue: formData.profitLoss, finalValue: profitLoss })
       
       const res = await fetch('/api/bets', {
         method: 'POST',
@@ -118,10 +119,11 @@ export default function BetsPage() {
       }
       
       // Ensure losses are negative
-      let profitLoss = formData.profitLoss
+      let profitLoss = parseFloat(formData.profitLoss.toString()) || 0
       if (formData.outcome === 'lost' && profitLoss > 0) {
         profitLoss = -profitLoss
       }
+      console.log('Submitting bet:', { outcome: formData.outcome, originalValue: formData.profitLoss, finalValue: profitLoss })
       
       const res = await fetch(`/api/bets/${editingBet.id}`, {
         method: 'PUT',
